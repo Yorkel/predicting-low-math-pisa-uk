@@ -111,3 +111,21 @@ Weights can be optionally applied during interpretation to generalize insights t
 ## 📎 References
 - [OECD PISA 2022 Database](https://www.oecd.org/pisa/data/2022database/)
 - PISA Data Analysis Manual (SPSS and SAS)
+
+
+🧠 Feature Selection and Index Use
+This project uses individual items from the PISA 2022 Student Questionnaire as features in decision tree-based models, including Decision Trees, Random Forests, and XGBoost.
+
+While the OECD provides official composite indices (e.g., Sense of Belonging, Economic, Social and Cultural Status) that are constructed using techniques such as Item Response Theory (IRT), these were not used here. Instead, raw questionnaire variables were selected based on the Socio-Ecological Model framework (individual, family, school, peer/social, context).
+
+💡 Rationale for Using Individual Items:
+The goal of this project is to learn and explore tree-based machine learning models, rather than replicate official PISA analysis pipelines.
+
+Decision tree models can naturally handle categorical, ordinal, and binary variables without requiring latent trait modeling or dimensionality reduction.
+
+Using individual items preserves granularity and makes model behavior more interpretable at the item level.
+
+Index construction (e.g., factor analysis or IRT) adds complexity and is more relevant for advanced psychometric modeling or cross-country comparisons.
+
+This approach supports a hands-on understanding of how decision tree models make splits and rank feature importance, using real-world education data.
+
