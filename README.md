@@ -1,131 +1,153 @@
-# 🎯 Predicting Low Maths Performance Using PISA 2022 UK Data
 
-This machine learning project uses the PISA 2022 UK student data to predict low student performance in mathematics. The goal is to identify at-risk students using background, SES, wellbeing, ICT use, and school support variables, with population-level accuracy and interpretability.
+# 📊 Predicting Low Math Performance Using PISA 2022 UK Data
+
+This project explores student-level predictors of low mathematics performance using the **PISA 2022 UK Student Questionnaire** data. It uses interpretable machine learning models (decision trees, random forests, and XGBoost) and survey weights to generate population-representative predictions and insights.
 
 ---
 
 ## 📁 Project Structure
 
-- `notebooks/`: EDA, preprocessing, modeling
-- `data/`: Raw and cleaned PISA datasets
-- `models/`: Trained model files
-- `outputs/`: Visualizations, evaluation results
-- `README.md`: Project overview and methodology
+```
+mini_project_2/
+│
+├── data/
+│   ├── raw/                            # Original OECD UK data
+│   │   ├── pisa_2022_uk_selected.csv
+│   │   └── uk_pisa_2022.csv
+│   │
+│   └── processed/                      # Cleaned and split datasets
+│       ├── train.csv, test.csv, val.csv
+│       ├── *_cont.csv                 # Continuous target splits
+│       ├── final_test_predictions_*.csv
+│
+├── notebooks/
+│   ├── 00_data_selection.ipynb        # Select target and relevant features
+│   ├── 01_eda.ipynb                   # Exploratory data analysis
+│   ├── 02_preprocessing_binary.ipynb  # Preprocessing for binary target
+│   ├── 02_preprocessing_continuous.ipynb # Preprocessing for regression
+│   ├── 03_decision_trees_pre_pruning.ipynb
+│   ├── 04_decision_trees_post_pruning.ipynb
+│   ├── 05_ensemble_random_forest.ipynb
+│   └── 06_XGBoost.ipynb               # Gradient boosting for regression
+│
+├── requirements.txt
+└── README.md
+└── reflection.md 
+
+```
 
 ---
 
-## 🧼 Data Preparation
+## 🎯 Objectives
 
-We use the PISA 2022 Student Questionnaire data for the United Kingdom (England, Wales, Scotland, Northern Ireland).
-
-### Key Steps:
-- Identify variables by theme (e.g. SES, demographics, wellbeing, ICT use)
-- Check and handle missing values
-- Encode categorical variables appropriately
-- Select `PV1MATH` as the initial target for classification (binary: below Level 2 or not)
-
-> 💡 **Plausible values** are multiple imputed test scores that estimate a student's ability, accounting for measurement uncertainty and ensuring accurate population-level analysis.  
-> Analysis is first run using `PV1MATH`, then repeated across all 10 plausible values (`PV1MATH` to `PV10MATH`) and averaged to ensure robust results.
+* ✅ Predict students at risk of **low math performance**
+* ✅ Use interpretable models with **weighted samples** (PISA design)
+* ✅ Explore **demographic, school, family, and psychological factors**
+* ✅ Build both **binary classification** and **continuous regression** models
 
 ---
 
-## ⚖️ Understanding & Applying Weights
+## 🧠 Target Variables
 
-PISA uses **stratified sampling** to ensure representation by region, gender, and school type. Because the sample is not purely random, results may be biased unless we correct for the sampling design.
-
-### Why Use Weights?
-
-- Each student is assigned a **final student weight** (`W_FSTUWT`) that reflects how many students they represent in the full population.
-- Without applying these weights, your model may overrepresent or underrepresent certain groups, leading to incorrect insights.
-
-### When to Use `W_FSTUWT`:
-
-- ❌ **Do not use** when engineering or computing features.
-- ✅ **Use during:**
-  - **Training**: `model.fit(X_train, y_train, sample_weight=W_FSTUWT)`
-  - **Evaluation**: Pass `sample_weight` to metrics like accuracy or F1
-  - **Interpretation**: Optionally use for SHAP/feature importance for generalizable insights
+* **Binary**: `math_binary` → below minimum proficiency level
+* **Continuous**: `math_1` → Plausible Value 1 (PV1MATH)
 
 ---
 
-## 📏 Measuring Uncertainty (Optional)
+## ⚖️ Sampling Weights
 
-To calculate **standard errors** or **confidence intervals**, use the **replicate weights** (`W_FSTR1` to `W_FSTR80`).
+All training and evaluation use the **`W_FSTUWT` survey weight** for population-representative modeling.
 
-- These represent 80 resampled versions of the dataset.
-- They allow estimation of how much a result (e.g. accuracy, feature importance) would vary across repeated samples.
-
-### Key Concepts:
-
-- **Standard Error (SE)**: How much a sample estimate is expected to vary.
-  - Small SE = more precise estimate
-  - Large SE = more uncertainty
-
-- **Confidence Interval (CI)**: A range where we expect the true value to fall, e.g., “We are 95% confident the population mean lies between X and Y.”
+| Step               | Weight Used? |
+| ------------------ | ------------ |
+| EDA                | Optional     |
+| Training models    | ✅ Yes        |
+| Evaluation metrics | ✅ Yes        |
 
 ---
 
-## 🧠 Model Training & Evaluation
+## 📊 Models Trained
 
-Models used:
-- Decision Tree Classifier
-- Random Forest
-- XGBoost Classifier
+### 🔹 Decision Trees
 
-All models are trained using `sample_weight=W_FSTUWT` for unbiased learning.
+* Overfit quickly on training data
+* Pre-pruning (e.g., `max_depth`, `min_samples_leaf`) improved generalization
+* Post-pruning (using `ccp_alpha`) simplified trees
 
-Evaluation includes:
-- Accuracy
-- F1 Score
-- Precision/Recall
-- ROC-AUC
-- Confusion Matrix
+### 🔹 Random Forests
 
-Weighted metrics are used where appropriate to reflect population-level performance.
+* Better performance and stability
+* Consistent top features: **SES**, **parent support**, **school belonging**
 
----
+### 🔹 XGBoost (for Regression)
 
-## 📊 Interpretability
-
-We use:
-- Feature importance plots
-- SHAP beeswarm plots
-- Grouped performance by student characteristics (e.g. gender, SES)
-
-Weights can be optionally applied during interpretation to generalize insights to the student population.
+* Models continuous `math_1` outcome
+* Best performance with shallow trees and tuned learning rates
+* Captures nonlinear relationships better than trees
 
 ---
 
-## ✅ Summary
+## 🧮 Key Features Used
 
-| Step                        | Use Weights? |
-|-----------------------------|--------------|
-| Feature engineering         | ❌ No         |
-| Model training              | ✅ Yes        |
-| Evaluation metrics          | ✅ Recommended|
-| SHAP / Feature Importance   | ✅ Optional   |
-| Standard errors / CI        | ✅ If needed  |
+* Socioeconomic status (ESCS)
+* Student wellbeing and confidence
+* Family background and support
+* School belonging and instructional support
+* Peer relationships and academic motivation
+
+---
+
+## 📈 Evaluation Metrics
+
+### For Classification:
+
+* Accuracy
+* Precision, Recall, F1
+* Confusion Matrix
+
+### For Regression:
+
+* MAE
+* RMSE
+* R² Score
+
+---
+
+## 🔍 How to Reproduce
+
+1. Clone the repo:
+
+   ```bash
+   git clone https://github.com/your-username/mini_project_2.git
+   cd mini_project_2
+   ```
+
+2. Install requirements:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Open notebooks in Jupyter or VS Code and run in order:
+
+   * `00_data_selection.ipynb`
+   * `01_eda.ipynb`
+   * `02_preprocessing_binary.ipynb` or `02_preprocessing_continuous.ipynb`
+   * Modeling notebooks (03–06)
+
+---
+
+## 📌 Findings
+
+* **SES is consistently the top predictor** across all models.
+* **Family support** and **school belonging** strongly correlate with performance.
+* Regression models (XGBoost) yield more nuanced predictions than binary models.
 
 ---
 
 ## 📎 References
-- [OECD PISA 2022 Database](https://www.oecd.org/pisa/data/2022database/)
-- PISA Data Analysis Manual (SPSS and SAS)
 
-
-🧠 Feature Selection and Index Use
-This project uses individual items from the PISA 2022 Student Questionnaire as features in decision tree-based models, including Decision Trees, Random Forests, and XGBoost.
-
-While the OECD provides official composite indices (e.g., Sense of Belonging, Economic, Social and Cultural Status) that are constructed using techniques such as Item Response Theory (IRT), these were not used here. Instead, raw questionnaire variables were selected based on the Socio-Ecological Model framework (individual, family, school, peer/social, context).
-
-💡 Rationale for Using Individual Items:
-The goal of this project is to learn and explore tree-based machine learning models, rather than replicate official PISA analysis pipelines.
-
-Decision tree models can naturally handle categorical, ordinal, and binary variables without requiring latent trait modeling or dimensionality reduction.
-
-Using individual items preserves granularity and makes model behavior more interpretable at the item level.
-
-Index construction (e.g., factor analysis or IRT) adds complexity and is more relevant for advanced psychometric modeling or cross-country comparisons.
-
-This approach supports a hands-on understanding of how decision tree models make splits and rank feature importance, using real-world education data.
+* [OECD PISA 2022 Data](https://www.oecd.org/pisa/data/2022database/)
+* [XGBoost Documentation](https://xgboost.readthedocs.io/)
+* [PISA Technical Manual](https://www.oecd.org/pisa/data/pisa2022technicalreport.htm)
 
